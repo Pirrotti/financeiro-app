@@ -174,7 +174,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="logo-mark">
       <div class="logo-icon">💡</div>
       <div>
-        <div class="logo-text">FinanceFlow</div>
+        <div class="logo-text">Finanças Diária</div>
         <div class="logo-sub">Descomplicando as finanças</div>
       </div>
     </div>
@@ -199,6 +199,29 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
   <!-- INÍCIO -->
   <div id="page-inicio" class="page active">
+    <!-- top bar com saldo -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="page-title" style="margin-bottom:2px">Início</h1>
+        <div style="font-size:13px;color:var(--muted)">Visão geral das suas finanças</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Saldo disponível</div>
+          <div id="top-saldo" style="font-size:22px;font-weight:800;color:var(--accent2)">R$ 0,00</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;min-width:200px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em">💰 Receita mensal</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="renda-mensal" placeholder="0,00" min="0" step="0.01"
+              style="flex:1;background:transparent;border:none;font-size:16px;font-weight:700;color:var(--accent2);padding:0;outline:none"
+              oninput="renderRendaTop()"/>
+            <span style="font-size:12px;color:var(--muted)">R$</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="hero">
       <div class="hero-phrase">Seu futuro financeiro está<br/>no controle de hoje.</div>
       <div class="hero-sub">Bem-vindo de volta! Veja como estão suas finanças.</div>
@@ -243,7 +266,19 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
 
-    <div class="sec-title">Tarefas pendentes</div>
+    <div class="sec-title">Limites de gasto por categoria</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Defina quanto quer gastar em cada categoria. O painel mostrará automaticamente o quanto você já usou.</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 120px auto;align-items:end">
+        <div class="field"><label>Tipo</label><select id="hb-tipo" onchange="hbUpdateCat()"><option value="Fixa">Fixa</option><option value="Variável">Variável</option></select></div>
+        <div class="field"><label>Categoria</label><select id="hb-cat"></select></div>
+        <div class="field"><label>Limite R$</label><input type="number" id="hb-val" placeholder="0,00" min="0" step="0.01"/></div>
+        <div class="field"><button class="btn btn-success" onclick="saveHomeBudget()">✔ Definir</button></div>
+      </div>
+    </div>
+    <div id="home-budget-list"></div>
+
+    <div class="sec-title" style="margin-top:20px">Tarefas pendentes</div>
     <div id="home-tasks"></div>
   </div>
 
@@ -548,6 +583,7 @@ function addExpense(){
   expenses.push({id:Date.now(),desc,tipo,cat,val,date:today()});
   document.getElementById('f-desc').value='';
   document.getElementById('f-val').value='';
+  document.getElementById('renda-mensal').value=12000;
   renderAll();
 }
 
@@ -689,13 +725,10 @@ function saveMonth(){
 }
 
 // ===== RENDER ALL =====
-function renderAll(){renderFinancas();renderSaldo();renderInicio();}
+function renderAll(){renderFinancas();renderRendaTop();renderHomeBudgetList();renderInicio();}
 
 function renderSaldo(){
-  const total=expenses.reduce((s,e)=>s+e.val,0);
-  // use renda if set, else show negative of expenses
-  document.getElementById('sb-saldo').textContent=fmt(-total);
-  document.getElementById('sb-saldo').style.color=total>0?'var(--danger)':'var(--accent2)';
+  renderRendaTop();
 }
 
 // ===== RENDER INICIO =====
@@ -1054,7 +1087,7 @@ function renderInvestimentos(){
 
 // ===== INIT =====
 function init(){
-  fUpdateCat();qUpdateCat();bUpdateCat();
+  fUpdateCat();qUpdateCat();bUpdateCat();hbUpdateCat();
   setCatOptions('b-cat',document.getElementById('b-tipo').value);
 
   document.getElementById('f-val').addEventListener('keydown',e=>{if(e.key==='Enter')addExpense();});
