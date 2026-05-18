@@ -218,10 +218,10 @@ h1.pt{font-size:18px;font-weight:900;letter-spacing:-.3px;text-transform:upperca
     </div>
     <div id="login-error" class="login-error">E-mail ou senha incorretos.</div>
     <div id="login-form">
-      <div class="login-field"><label>E-mail</label><input type="email" id="l-email" placeholder="seu@email.com"/></div>
-      <div class="login-field"><label>Senha</label><input type="password" id="l-pass" placeholder="••••••••"/></div>
+      <div class="login-field"><label>E-mail</label><input type="email" id="l-email" placeholder="seu@email.com" value="demo@financas.com"/></div>
+      <div class="login-field"><label>Senha</label><input type="password" id="l-pass" placeholder="••••••••" value="123456"/></div>
       <button class="login-btn" onclick="doLogin()">Entrar</button>
-      <p class="login-hint">Use o e-mail e senha cadastrados no Firebase.<br/>Todos da família compartilham o mesmo login.</p>
+      <p class="login-hint">Demo: demo@financas.com / 123456</p>
     </div>
     <div id="register-form" style="display:none">
       <div class="login-field"><label>Nome</label><input type="text" id="r-name" placeholder="Seu nome"/></div>
@@ -555,110 +555,34 @@ function toggleTheme(){
   if(document.getElementById('page-graficos').classList.contains('active'))renderGraficos();
 }
 
-// ── FIREBASE CONFIG ──
-// 🔥 Cole aqui as credenciais do seu projeto Firebase Console
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyBtVDwO3b1Lrk2eAuLAWAP32UsNfhvy86Q",
-  authDomain:        "financas-diaria.firebaseapp.com",
-  projectId:         "financas-diaria",
-  storageBucket:     "financas-diaria.firebasestorage.app",
-  messagingSenderId: "570913427663",
-  appId:             "1:570913427663:web:a7415ac5a1d5e21afaa7ba"
-};
-const FAMILY_DOC = "familia_principal";
-let _auth, _db, _unsubscribe, _saveTimer;
-
-async function loadFirebase() {
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
-    = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
-  const { getFirestore, doc, setDoc, onSnapshot }
-    = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-  const app = initializeApp(FIREBASE_CONFIG);
-  _auth = getAuth(app); _db = getFirestore(app);
-  onAuthStateChanged(_auth, user => {
-    if (user) {
-      document.getElementById('login-screen').style.display='none';
-      document.getElementById('app').style.display='flex';
-      document.getElementById('sb-user').textContent=user.email;
-      _startSync(doc, setDoc, onSnapshot);
-    } else {
-      document.getElementById('app').style.display='none';
-      document.getElementById('login-screen').style.display='flex';
-      if (_unsubscribe){_unsubscribe();_unsubscribe=null;}
-    }
-  });
-  window._fbSignIn = (e,p) => signInWithEmailAndPassword(_auth,e,p);
-  window._fbSignUp = (e,p) => createUserWithEmailAndPassword(_auth,e,p);
-  window._fbSignOut = () => signOut(_auth);
-}
-
-function _startSync(doc, setDoc, onSnapshot) {
-  const ref = doc(_db, "familias", FAMILY_DOC);
-  _unsubscribe = onSnapshot(ref, snap => {
-    if (!snap.exists()) return;
-    const d = snap.data();
-    expenses=d.expenses||[]; budgets=d.budgets||{}; history=d.history||[];
-    tasks=d.tasks||[]; payments=d.payments||[]; investments=d.investments||[];
-    rendaMensal=d.rendaMensal||0; verbaMensal=d.verbaMensal||0;
-    semanasCustom=d.semanasCustom||{}; colorMap=d.colorMap||{}; colorIdx=d.colorIdx||0;
-    if(rendaMensal>0){const i=document.getElementById('renda-input'),b=document.getElementById('renda-save');i.value=rendaMensal.toFixed(2);i.disabled=true;b.textContent='Alterar';b.onclick=editarRenda;}
-    if(verbaMensal>0)document.getElementById('sw-vm').value=verbaMensal.toFixed(2);
-    if(Object.keys(semanasCustom).length){document.getElementById('sw-div').value='custom';document.getElementById('sw-custom').style.display='block';['sw-s1','sw-s2','sw-s3','sw-s4'].forEach((id,i)=>{if(semanasCustom[i]!==undefined)document.getElementById(id).value=semanasCustom[i].toFixed(2);});}
-    renderAll();renderCalendario();renderInvestimentos();
-  }, err => console.warn('Sync error:',err));
-}
-
-async function saveToFirebase() {
-  if(!_db)return;
-  clearTimeout(_saveTimer);
-  _saveTimer=setTimeout(async()=>{
-    try{
-      const {doc,setDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-      await setDoc(doc(_db,"familias",FAMILY_DOC),{expenses,budgets,history,tasks,payments,investments,rendaMensal,verbaMensal,semanasCustom,colorMap,colorIdx,updatedAt:new Date().toISOString()});
-      flashSync('☁️ Sincronizado');
-    }catch(e){flashSync('⚠️ Erro ao salvar',true);console.warn(e);}
-  },800);
-}
-
-function flashSync(msg,err=false){
-  let el=document.getElementById('sync-ind');
-  if(!el){el=document.createElement('div');el.id='sync-ind';el.style.cssText='position:fixed;top:14px;right:50px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid';document.body.appendChild(el);}
-  el.textContent=msg;el.style.background=err?'rgba(204,51,51,.12)':'rgba(46,125,50,.12)';el.style.borderColor=err?'rgba(204,51,51,.3)':'rgba(46,125,50,.3)';el.style.color=err?'#e57373':'#66bb6a';el.style.opacity='1';
-  clearTimeout(window._flashT);window._flashT=setTimeout(()=>el.style.opacity='0',2500);
-}
-
 // ── LOGIN ──
+const DEMO={email:'demo@financas.com',pass:'123456',name:'Demo'};
 function setTab(t){
   document.querySelectorAll('.login-tab').forEach((b,i)=>b.classList.toggle('active',(t==='login'?i===0:i===1)));
   document.getElementById('login-form').style.display=t==='login'?'block':'none';
   document.getElementById('register-form').style.display=t==='register'?'block':'none';
   document.getElementById('login-error').classList.remove('show');
 }
-async function doLogin(){
-  const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value;
-  const errEl=document.getElementById('login-error'),btn=document.querySelector('#login-form .login-btn');
-  btn.textContent='Entrando...';btn.disabled=true;errEl.classList.remove('show');
-  try{await window._fbSignIn(email,pass);}
-  catch(e){errEl.textContent=traduzErro(e.code);errEl.classList.add('show');btn.textContent='Entrar';btn.disabled=false;}
+function doLogin(){
+  const e=document.getElementById('l-email').value.trim(),p=document.getElementById('l-pass').value;
+  if(e===DEMO.email&&p===DEMO.pass)enterApp(DEMO.name);
+  else document.getElementById('login-error').classList.add('show');
 }
-async function doRegister(){
-  const name=document.getElementById('r-name').value.trim(),email=document.getElementById('r-email').value.trim(),pass=document.getElementById('r-pass').value;
-  if(!name||!email||pass.length<6){alert('Preencha todos os campos. Senha mínimo 6 caracteres.');return;}
-  const btn=document.querySelector('#register-form .login-btn');
-  btn.textContent='Criando...';btn.disabled=true;
-  try{await window._fbSignUp(email,pass);}
-  catch(e){alert(traduzErro(e.code));btn.textContent='Criar conta';btn.disabled=false;}
+function doRegister(){
+  const n=document.getElementById('r-name').value.trim(),e=document.getElementById('r-email').value.trim(),p=document.getElementById('r-pass').value;
+  if(!n||!e||p.length<6){alert('Preencha todos os campos. Senha mínimo 6 caracteres.');return;}
+  enterApp(n);
 }
-async function doLogout(){
-  if(!confirm('Sair da conta?'))return;
-  await window._fbSignOut();
+function enterApp(name){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('sb-user').textContent=name;
+  renderAll();renderCalendario();renderInvestimentos();
 }
-function traduzErro(code){
-  const m={'auth/invalid-email':'E-mail inválido.','auth/user-not-found':'Usuário não encontrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-credential':'E-mail ou senha incorretos.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha fraca (mínimo 6 caracteres).','auth/too-many-requests':'Muitas tentativas. Tente depois.','auth/network-request-failed':'Sem conexão.'};
-  return m[code]||'Erro inesperado. Tente novamente.';
+function doLogout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
 }
-loadFirebase();
 function checkPw(){
   const v=document.getElementById('r-pass').value;
   const s=v.length>=8?4:v.length>=6?3:v.length>=4?2:v.length>0?1:0;
@@ -699,7 +623,7 @@ function fixarRenda(){
   rendaMensal=v;
   const i=document.getElementById('renda-input'),b=document.getElementById('renda-save');
   i.disabled=true;b.textContent='Alterar';b.onclick=editarRenda;
-  renderAll();saveToFirebase();
+  renderAll();
 }
 
 function updateSaldo(){
@@ -734,7 +658,7 @@ function addExp(){
   expenses.push({id:Date.now(),desc,tipo,cat,val,date:today()});
   if(tipo==='Fixa'&&!budgets[cat])budgets[cat]=val;
   document.getElementById('f-desc').value='';document.getElementById('f-val').value='';
-  renderAll();saveToFirebase();
+  renderAll();
 }
 function quickAdd(){
   const tipo=document.getElementById('q-tipo').value,cat=document.getElementById('q-cat').value,val=parseFloat(document.getElementById('q-val').value);
@@ -742,10 +666,10 @@ function quickAdd(){
   expenses.push({id:Date.now(),desc:'',tipo,cat,val,date:today()});
   if(tipo==='Fixa'&&!budgets[cat])budgets[cat]=val;
   document.getElementById('q-val').value='';
-  renderAll();saveToFirebase();
+  renderAll();
   const btn=document.getElementById('q-btn'),o=btn.textContent;btn.textContent='OK';setTimeout(()=>btn.textContent=o,1200);
 }
-function removeExp(id){expenses=expenses.filter(e=>e.id!==id);renderAll();saveToFirebase();}
+function removeExp(id){expenses=expenses.filter(e=>e.id!==id);renderAll();}
 function openEdit(id){
   const e=expenses.find(x=>x.id===id);if(!e)return;editingId=id;
   document.getElementById('e-desc').value=e.desc;document.getElementById('e-tipo').value=e.tipo;eCat();
@@ -757,9 +681,9 @@ function saveEdit(){
   const i=expenses.findIndex(x=>x.id===editingId);if(i<0)return;
   const val=parseFloat(document.getElementById('e-val').value);if(isNaN(val)||val<=0)return;
   expenses[i]={...expenses[i],desc:document.getElementById('e-desc').value.trim(),tipo:document.getElementById('e-tipo').value,cat:document.getElementById('e-cat').value,val};
-  closeModal();renderAll();saveToFirebase();
+  closeModal();renderAll();
 }
-function clearExp(){if(!confirm('Limpar todos os lancamentos?'))return;expenses=[];renderAll();saveToFirebase();}
+function clearExp(){if(!confirm('Limpar todos os lancamentos?'))return;expenses=[];renderAll();}
 function expCSV(){
   if(!expenses.length){alert('Sem dados.');return;}
   const rows=[['Data','Descricao','Tipo','Categoria','Valor'],...expenses.map(e=>[e.date,e.desc||'',e.tipo,e.cat,e.val.toFixed(2).replace('.',',')])];
@@ -768,27 +692,27 @@ function expCSV(){
 }
 function getCats(){const m={};expenses.forEach(e=>{m[e.cat]=(m[e.cat]||0)+e.val;});return m;}
 
-function saveBudget(){const cat=document.getElementById('b-cat').value,val=parseFloat(document.getElementById('b-val').value);if(isNaN(val)||val<=0)return;budgets[cat]=val;document.getElementById('b-val').value='';renderAll();saveToFirebase();}
-function saveHB(){const cat=document.getElementById('hb-cat').value,val=parseFloat(document.getElementById('hb-val').value);if(isNaN(val)||val<=0)return;budgets[cat]=val;document.getElementById('hb-val').value='';renderAll();saveToFirebase();}
-function removeBudget(cat){delete budgets[cat];renderAll();saveToFirebase();}
+function saveBudget(){const cat=document.getElementById('b-cat').value,val=parseFloat(document.getElementById('b-val').value);if(isNaN(val)||val<=0)return;budgets[cat]=val;document.getElementById('b-val').value='';renderAll();}
+function saveHB(){const cat=document.getElementById('hb-cat').value,val=parseFloat(document.getElementById('hb-val').value);if(isNaN(val)||val<=0)return;budgets[cat]=val;document.getElementById('hb-val').value='';renderAll();}
+function removeBudget(cat){delete budgets[cat];renderAll();}
 
 function swDiv(){document.getElementById('sw-custom').style.display=document.getElementById('sw-div').value==='custom'?'block':'none';}
-function saveVerba(){const v=parseFloat(document.getElementById('sw-vm').value);if(isNaN(v)||v<=0)return;verbaMensal=v;if(document.getElementById('sw-div').value==='equal')semanasCustom={};renderSemanal();renderInicio();saveToFirebase();}
-function saveCSem(){const vals=['sw-s1','sw-s2','sw-s3','sw-s4'].map(id=>parseFloat(document.getElementById(id).value)||0);semanasCustom={0:vals[0],1:vals[1],2:vals[2],3:vals[3]};renderSemanal();saveToFirebase();}
+function saveVerba(){const v=parseFloat(document.getElementById('sw-vm').value);if(isNaN(v)||v<=0)return;verbaMensal=v;if(document.getElementById('sw-div').value==='equal')semanasCustom={};renderSemanal();renderInicio();}
+function saveCSem(){const vals=['sw-s1','sw-s2','sw-s3','sw-s4'].map(id=>parseFloat(document.getElementById(id).value)||0);semanasCustom={0:vals[0],1:vals[1],2:vals[2],3:vals[3]};renderSemanal();}
 
-function addTask(){const d=document.getElementById('task-desc').value.trim(),dt=document.getElementById('task-date').value;if(!d)return;tasks.push({id:Date.now(),desc:d,date:dt,done:false});document.getElementById('task-desc').value='';document.getElementById('task-date').value='';renderCalendario();renderInicio();saveToFirebase();}
-function toggleTask(id){const t=tasks.find(x=>x.id===id);if(t)t.done=!t.done;renderCalendario();renderInicio();saveToFirebase();}
-function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderCalendario();renderInicio();saveToFirebase();}
+function addTask(){const d=document.getElementById('task-desc').value.trim(),dt=document.getElementById('task-date').value;if(!d)return;tasks.push({id:Date.now(),desc:d,date:dt,done:false});document.getElementById('task-desc').value='';document.getElementById('task-date').value='';renderCalendario();renderInicio();}
+function toggleTask(id){const t=tasks.find(x=>x.id===id);if(t)t.done=!t.done;renderCalendario();renderInicio();}
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderCalendario();renderInicio();}
 
-function addPay(){const d=document.getElementById('pay-desc').value.trim(),dt=document.getElementById('pay-date').value,v=parseFloat(document.getElementById('pay-val').value);if(!d||!dt||isNaN(v)||v<=0)return;payments.push({id:Date.now(),desc:d,date:dt,val:v,paid:false});document.getElementById('pay-desc').value='';document.getElementById('pay-date').value='';document.getElementById('pay-val').value='';renderCalendario();saveToFirebase();}
-function togglePaid(id){const p=payments.find(x=>x.id===id);if(p)p.paid=!p.paid;renderCalendario();saveToFirebase();}
-function removePay(id){payments=payments.filter(p=>p.id!==id);renderCalendario();saveToFirebase();}
+function addPay(){const d=document.getElementById('pay-desc').value.trim(),dt=document.getElementById('pay-date').value,v=parseFloat(document.getElementById('pay-val').value);if(!d||!dt||isNaN(v)||v<=0)return;payments.push({id:Date.now(),desc:d,date:dt,val:v,paid:false});document.getElementById('pay-desc').value='';document.getElementById('pay-date').value='';document.getElementById('pay-val').value='';renderCalendario();}
+function togglePaid(id){const p=payments.find(x=>x.id===id);if(p)p.paid=!p.paid;renderCalendario();}
+function removePay(id){payments=payments.filter(p=>p.id!==id);renderCalendario();}
 
-function addInv(){const nome=document.getElementById('inv-nome').value.trim(),tipo=document.getElementById('inv-tipo').value,goal=parseFloat(document.getElementById('inv-goal').value),saved=parseFloat(document.getElementById('inv-saved').value)||0;if(!nome||isNaN(goal)||goal<=0)return;investments.push({id:Date.now(),nome,tipo,goal,saved});document.getElementById('inv-nome').value='';document.getElementById('inv-goal').value='';document.getElementById('inv-saved').value='';renderInvestimentos();saveToFirebase();}
+function addInv(){const nome=document.getElementById('inv-nome').value.trim(),tipo=document.getElementById('inv-tipo').value,goal=parseFloat(document.getElementById('inv-goal').value),saved=parseFloat(document.getElementById('inv-saved').value)||0;if(!nome||isNaN(goal)||goal<=0)return;investments.push({id:Date.now(),nome,tipo,goal,saved});document.getElementById('inv-nome').value='';document.getElementById('inv-goal').value='';document.getElementById('inv-saved').value='';renderInvestimentos();}
 function openAporte(id){aportingId=id;const inv=investments.find(x=>x.id===id);document.getElementById('inv-modal-title').textContent=`Aportar — ${inv.nome}`;document.getElementById('inv-aporte').value='';document.getElementById('inv-modal').classList.add('open');}
 function closeInvModal(){document.getElementById('inv-modal').classList.remove('open');aportingId=null;}
-function saveAporte(){const val=parseFloat(document.getElementById('inv-aporte').value);if(isNaN(val)||val<=0)return;const inv=investments.find(x=>x.id===aportingId);if(inv)inv.saved=Math.min(inv.saved+val,inv.goal);closeInvModal();renderInvestimentos();saveToFirebase();}
-function removeInv(id){investments=investments.filter(i=>i.id!==id);renderInvestimentos();saveToFirebase();}
+function saveAporte(){const val=parseFloat(document.getElementById('inv-aporte').value);if(isNaN(val)||val<=0)return;const inv=investments.find(x=>x.id===aportingId);if(inv)inv.saved=Math.min(inv.saved+val,inv.goal);closeInvModal();renderInvestimentos();}
+function removeInv(id){investments=investments.filter(i=>i.id!==id);renderInvestimentos();}
 
 function saveMonth(){
   if(!expenses.length){alert('Sem despesas.');return;}
@@ -798,7 +722,7 @@ function saveMonth(){
   const ex=history.findIndex(h=>h.key===key);
   if(ex>=0)history[ex]=entry; else history.push(entry);
   history.sort((a,b)=>a.key.localeCompare(b.key));
-  renderRelatorio();saveToFirebase();alert(`${label} salvo.`);
+  renderRelatorio();alert(`${label} salvo.`);
 }
 
 function renderAll(){renderFinancas();updateSaldo();renderHBList();renderInicio();}
