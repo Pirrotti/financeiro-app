@@ -36,10 +36,6 @@ button{cursor:pointer;transition:.2s;font-size:13px}
 .saldo-label{font-size:10px;color:var(--muted);margin-bottom:3px}
 .saldo-val{font-size:17px;font-weight:700}
 
-/* SAVE INDICATOR */
-#save-indicator{position:fixed;top:16px;right:20px;background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.4);color:#00d4aa;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
-#save-indicator.show{opacity:1}
-
 /* MAIN */
 #main{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 28px}
 .page{display:none}.page.active{display:block}
@@ -65,7 +61,6 @@ h1.page-title{font-size:22px;font-weight:700;margin-bottom:4px}
 .btn-success{background:var(--accent2);color:#0a0a0f}.btn-success:hover{opacity:.85}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}.btn-danger:hover{background:var(--danger);color:#fff}
-.btn-warn{background:transparent;border:1px solid var(--warn);color:var(--warn)}.btn-warn:hover{background:var(--warn);color:#0a0a0f}
 .btn-sm{padding:5px 10px;font-size:12px}
 .btn-xs{padding:3px 7px;font-size:11px;border-radius:5px}
 .row-btns{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
@@ -98,7 +93,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .alert-d{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.3);color:#ff8fa3}
 .alert-w{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fbbf24}
 .alert-s{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:#34d399}
-.alert-i{background:rgba(108,99,255,.1);border-color:rgba(108,99,255,.3);color:#a89cff}
 
 /* CHART */
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:20px}
@@ -115,9 +109,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .modal-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-form .full{grid-column:1/-1}
-
-/* RESET MODAL */
-.reset-modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;width:min(420px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 
 /* SEC TITLE */
 .sec-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -170,8 +161,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </head>
 <body>
 
-<div id="save-indicator">💾 Salvo automaticamente</div>
-
 <!-- SIDEBAR -->
 <nav id="sidebar">
   <div class="logo">
@@ -191,11 +180,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="nav-item" onclick="nav('relatorio')"><span class="nav-num">06</span><span class="nav-icon">📋</span>Relatório</div>
   <div class="nav-item" onclick="nav('investimentos')"><span class="nav-num">07</span><span class="nav-icon">🏦</span>Investimentos</div>
   <div class="sidebar-bottom">
-    <div class="saldo-pill" style="margin-bottom:10px">
+    <div class="saldo-pill">
       <div class="saldo-label">Saldo disponível</div>
       <div class="saldo-val" id="sb-saldo">—</div>
     </div>
-    <button class="btn btn-warn btn-sm" style="width:100%;justify-content:center" onclick="openResetModal()">⚠️ Resetar dados</button>
   </div>
 </nav>
 
@@ -204,11 +192,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
   <!-- INÍCIO -->
   <div id="page-inicio" class="page active">
+    <!-- topbar -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:16px;flex-wrap:wrap">
       <div>
         <h1 class="page-title">Início</h1>
         <div style="font-size:13px;color:var(--muted)">Visão geral das suas finanças</div>
       </div>
+      <!-- saldo + receita -->
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <div style="text-align:right">
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Saldo disponível</div>
@@ -222,11 +212,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
               <input type="number" id="renda-input" placeholder="0,00" min="0" step="0.01"/>
             </div>
           </div>
-          <button class="renda-save" onclick="fixarRenda()">✔ Fixar</button>
+          <button class="renda-save" id="renda-save" onclick="fixarRenda()">✔ Fixar</button>
         </div>
       </div>
     </div>
 
+    <!-- hero -->
     <div class="hero">
       <div class="hero-phrase">Seu futuro financeiro está<br/>no controle de hoje.</div>
       <div class="hero-sub" id="hero-sub-txt">Defina sua receita mensal para começar.</div>
@@ -243,6 +234,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
 
+    <!-- resumo do dia -->
     <div class="cards-row cols-3">
       <div class="card card-accent">
         <div class="card-label">Hoje — lançamentos</div>
@@ -261,6 +253,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
 
+    <!-- limites por categoria -->
     <div class="sec-title">Limite de gasto por categoria</div>
     <div class="card" style="margin-bottom:14px">
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Defina quanto quer gastar em cada categoria. Despesas fixas são automaticamente marcadas como 100% ao serem lançadas.</div>
@@ -273,6 +266,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div id="home-budget-list"></div>
 
+    <!-- lançamento rápido -->
     <div class="sec-title" style="margin-top:20px">Lançamento rápido</div>
     <div class="quick-add">
       <div class="form-grid" style="grid-template-columns:1fr 1fr 100px auto;align-items:end">
@@ -283,6 +277,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
 
+    <!-- tarefas -->
     <div class="sec-title">Tarefas pendentes</div>
     <div id="home-tasks"></div>
   </div>
@@ -337,6 +332,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div id="page-semanal" class="page">
     <h1 class="page-title">Controle Semanal</h1>
     <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Defina uma verba mensal para gastos variáveis e distribua por semana</div>
+
+    <!-- configuração da verba -->
     <div class="card" style="margin-bottom:20px">
       <div class="sec-title">Configurar verba mensal para gastos variáveis</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Este valor é separado das despesas fixas. Você define quanto quer ter disponível no mês e o sistema divide pelas 4 semanas automaticamente.</div>
@@ -361,17 +358,25 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <button class="btn btn-success btn-sm" style="margin-top:10px" onclick="saveCustomSemanas()">Salvar semanas</button>
       </div>
     </div>
+
+    <!-- semana atual -->
     <div class="cards-row cols-4">
       <div class="card card-accent"><div class="card-label">Verba mensal</div><div class="card-value" id="sw-vm">R$ 0,00</div></div>
       <div class="card card-accent"><div class="card-label">Meta semana atual</div><div class="card-value" id="sw-meta">R$ 0,00</div></div>
       <div class="card card-red"><div class="card-label">Gasto esta semana</div><div class="card-value" id="sw-gasto">R$ 0,00</div></div>
       <div class="card card-green"><div class="card-label">Saldo da semana</div><div class="card-value" id="sw-saldo">R$ 0,00</div></div>
     </div>
+
     <div id="sw-alert"></div>
+
+    <!-- semanas -->
     <div class="sec-title">Visão das 4 semanas do mês</div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px" id="sw-weeks-overview"></div>
+
+    <!-- gastos por categoria na semana -->
     <div class="sec-title">Gastos por categoria — semana atual</div>
     <div id="sw-cats"></div>
+
     <div class="sec-title" style="margin-top:16px">Lançamentos da semana atual</div>
     <div class="table-wrap">
       <table>
@@ -529,26 +534,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- MODAL RESET -->
-<div class="overlay" id="reset-modal">
-  <div class="reset-modal">
-    <div class="modal-title">⚠️ Resetar todos os dados</div>
-    <div class="alert alert-d" style="margin-bottom:16px">
-      <span>⚠️</span>
-      <span>Esta ação irá apagar <strong>todos os dados salvos</strong> permanentemente: despesas, orçamentos, tarefas, pagamentos, investimentos e histórico. Não é possível desfazer.</span>
-    </div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Digite <strong style="color:var(--danger)">RESETAR</strong> para confirmar:</div>
-    <div class="field" style="margin-bottom:16px"><input type="text" id="reset-confirm-input" placeholder="Digite RESETAR" style="width:100%"/></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeResetModal()">Cancelar</button>
-      <button class="btn btn-danger" onclick="confirmReset()">🗑 Apagar tudo</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ===== CONSTANTS =====
-const STORAGE_KEY = 'financas_diaria_v2';
 const FIXAS=['Aluguel','Financiamento','Água','Luz','Energia solar','Internet','Telefone celular','Plano de saúde','Seguro veicular','OAB Alcides','OAB Natalia','Streaming e assinaturas','Academia','Funcionários / folha de pagamento','Impostos / IPVA / IPTU / TAXA','Dízimo / doações','Mercado'];
 const VARIAVEIS=['Cartão de crédito','Mercado','Alimentação fora de casa','Delivery','Combustível','Transporte','Farmácia','Saúde','Educação','Lazer','Restaurante','Pizzaria','Panificadora','Vestuário','Pedágio','Manutenção do veículo','Taxas bancárias','Emergência','Reserva'];
 const PALETTE=['#6c63ff','#00d4aa','#ff6584','#f5c842','#60a5fa','#fb923c','#a78bfa','#34d399','#f472b6','#fbbf24','#818cf8','#2dd4bf','#f87171','#4ade80','#e879f9','#38bdf8','#fb7185','#a3e635','#c084fc','#22d3ee'];
@@ -559,85 +546,12 @@ let expenses=[], budgets={}, history=[], tasks=[], payments=[], investments=[];
 let colorMap={}, colorIdx=0, editingId=null, aportingId=null;
 let gDonut,gPizza,gBar,gComp,rChart;
 let calDate=new Date();
-let rendaMensal=0;
-let verbaMensal=0;
-let semanasCustom={};
-
-// ===== PERSISTENCE =====
-let saveTimeout = null;
-
-function saveData() {
-  try {
-    const data = {
-      expenses, budgets, history, tasks, payments, investments,
-      colorMap, colorIdx, rendaMensal, verbaMensal, semanasCustom,
-      savedAt: new Date().toISOString()
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    flashSaved();
-  } catch(e) {
-    console.warn('Erro ao salvar:', e);
-  }
-}
-
-function flashSaved() {
-  const el = document.getElementById('save-indicator');
-  el.classList.add('show');
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => el.classList.remove('show'), 2000);
-}
-
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    expenses = data.expenses || [];
-    budgets = data.budgets || {};
-    history = data.history || [];
-    tasks = data.tasks || [];
-    payments = data.payments || [];
-    investments = data.investments || [];
-    colorMap = data.colorMap || {};
-    colorIdx = data.colorIdx || 0;
-    rendaMensal = data.rendaMensal || 0;
-    verbaMensal = data.verbaMensal || 0;
-    semanasCustom = data.semanasCustom || {};
-    return true;
-  } catch(e) {
-    console.warn('Erro ao carregar:', e);
-    return false;
-  }
-}
-
-function openResetModal() {
-  document.getElementById('reset-confirm-input').value = '';
-  document.getElementById('reset-modal').classList.add('open');
-}
-function closeResetModal() {
-  document.getElementById('reset-modal').classList.remove('open');
-}
-function confirmReset() {
-  const val = document.getElementById('reset-confirm-input').value.trim();
-  if (val !== 'RESETAR') {
-    document.getElementById('reset-confirm-input').style.borderColor = 'var(--danger)';
-    setTimeout(() => document.getElementById('reset-confirm-input').style.borderColor = '', 1200);
-    return;
-  }
-  localStorage.removeItem(STORAGE_KEY);
-  expenses=[]; budgets={}; history=[]; tasks=[]; payments=[]; investments=[];
-  colorMap={}; colorIdx=0; rendaMensal=0; verbaMensal=0; semanasCustom={};
-  document.getElementById('renda-input').value = '';
-  document.getElementById('sw-verba-mensal').value = '';
-  closeResetModal();
-  renderAll();
-  renderCalendario();
-  renderInvestimentos();
-  alert('Todos os dados foram apagados.');
-}
+let rendaMensal=0; // receita fixa
+let verbaMensal=0; // verba semanal (separada)
+let semanasCustom={}; // {0:x,1:x,2:x,3:x}
 
 // ===== HELPERS =====
-function getColor(cat){if(!colorMap[cat]){colorMap[cat]=PALETTE[colorIdx++%PALETTE.length];}return colorMap[cat];}
+function getColor(cat){if(!colorMap[cat])colorMap[cat]=PALETTE[colorIdx++%PALETTE.length];return colorMap[cat];}
 function fmt(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function today(){return new Date().toISOString().split('T')[0];}
 function getWeekNum(){const d=new Date().getDate();return d<=7?0:d<=14?1:d<=21?2:3;}
@@ -657,8 +571,16 @@ function fixarRenda(){
   if(isNaN(v)||v<0)return;
   rendaMensal=v;
   document.getElementById('renda-input').value=v.toFixed(2);
+  document.getElementById('renda-input').disabled=true;
+  document.getElementById('renda-save').textContent='✎ Alterar';
+  document.getElementById('renda-save').onclick=editarRenda;
   renderAll();
-  saveData();
+}
+function editarRenda(){
+  document.getElementById('renda-input').disabled=false;
+  document.getElementById('renda-input').focus();
+  document.getElementById('renda-save').textContent='✔ Fixar';
+  document.getElementById('renda-save').onclick=fixarRenda;
 }
 
 function updateSaldoUI(){
@@ -676,6 +598,8 @@ function updateSaldoUI(){
   }
   topEl.style.color=cor;
   sbEl.style.color=cor;
+
+  // barra hero
   const pct=rendaMensal>0?Math.round(total/rendaMensal*100):0;
   document.getElementById('h-prog-fill').style.width=Math.min(pct,100)+'%';
   document.getElementById('h-prog-pct').textContent=pct+'%';
@@ -725,11 +649,11 @@ function addExpense(){
   if(isNaN(val)||val<=0){document.getElementById('f-val').focus();return;}
   const exp={id:Date.now(),desc,tipo,cat,val,date:today()};
   expenses.push(exp);
+  // se fixa: auto-set limite = valor lançado se não existir
   if(tipo==='Fixa'&&!budgets[cat]) budgets[cat]=val;
   document.getElementById('f-desc').value='';
   document.getElementById('f-val').value='';
   renderAll();
-  saveData();
 }
 
 function quickAdd(){
@@ -742,13 +666,12 @@ function quickAdd(){
   if(tipo==='Fixa'&&!budgets[cat]) budgets[cat]=val;
   document.getElementById('q-val').value='';
   renderAll();
-  saveData();
   const btn=document.getElementById('q-btn');
   const orig=btn.textContent;btn.textContent='✓ Lançado!';
   setTimeout(()=>btn.textContent=orig,1400);
 }
 
-function removeExpense(id){expenses=expenses.filter(e=>e.id!==id);renderAll();saveData();}
+function removeExpense(id){expenses=expenses.filter(e=>e.id!==id);renderAll();}
 
 function openEdit(id){
   const e=expenses.find(x=>x.id===id);if(!e)return;
@@ -765,9 +688,9 @@ function saveEdit(){
   const i=expenses.findIndex(x=>x.id===editingId);if(i<0)return;
   const val=parseFloat(document.getElementById('e-val').value);if(isNaN(val)||val<=0)return;
   expenses[i]={...expenses[i],desc:document.getElementById('e-desc').value.trim(),tipo:document.getElementById('e-tipo').value,cat:document.getElementById('e-cat').value,val};
-  closeModal();renderAll();saveData();
+  closeModal();renderAll();
 }
-function clearExpenses(){if(!confirm('Limpar todos os lançamentos?'))return;expenses=[];renderAll();saveData();}
+function clearExpenses(){if(!confirm('Limpar todos os lançamentos?'))return;expenses=[];renderAll();}
 function exportCSV(){
   if(!expenses.length){alert('Sem dados.');return;}
   const rows=[['Data','Descrição','Tipo','Categoria','Valor'],...expenses.map(e=>[e.date,e.desc||'',e.tipo,e.cat,e.val.toFixed(2).replace('.',',')])];
@@ -782,15 +705,15 @@ function saveBudget(){
   const cat=document.getElementById('b-cat').value;
   const val=parseFloat(document.getElementById('b-val').value);
   if(isNaN(val)||val<=0){document.getElementById('b-val').focus();return;}
-  budgets[cat]=val;document.getElementById('b-val').value='';renderAll();saveData();
+  budgets[cat]=val;document.getElementById('b-val').value='';renderAll();
 }
-function removeBudget(cat){delete budgets[cat];renderAll();saveData();}
+function removeBudget(cat){delete budgets[cat];renderAll();}
 
 function saveHomeBudget(){
   const cat=document.getElementById('hb-cat').value;
   const val=parseFloat(document.getElementById('hb-val').value);
   if(isNaN(val)||val<=0){document.getElementById('hb-val').focus();return;}
-  budgets[cat]=val;document.getElementById('hb-val').value='';renderAll();saveData();
+  budgets[cat]=val;document.getElementById('hb-val').value='';renderAll();
 }
 
 // ===== VERBA SEMANAL =====
@@ -807,12 +730,12 @@ function saveVerbaMensal(){
     const each=(v/4).toFixed(2);
     ['sw-s1','sw-s2','sw-s3','sw-s4'].forEach(id=>document.getElementById(id).value=each);
   }
-  renderSemanal();renderInicio();saveData();
+  renderSemanal();renderInicio();
 }
 function saveCustomSemanas(){
   const vals=['sw-s1','sw-s2','sw-s3','sw-s4'].map(id=>parseFloat(document.getElementById(id).value)||0);
   semanasCustom={0:vals[0],1:vals[1],2:vals[2],3:vals[3]};
-  renderSemanal();saveData();
+  renderSemanal();
 }
 document.getElementById('sw-divisao').addEventListener('change',function(){
   document.getElementById('sw-custom-form').style.display=this.value==='custom'?'block':'none';
@@ -826,10 +749,10 @@ function addTask(){
   tasks.push({id:Date.now(),desc,date,done:false});
   document.getElementById('task-desc').value='';
   document.getElementById('task-date').value='';
-  renderCalendario();renderInicio();saveData();
+  renderCalendario();renderInicio();
 }
-function toggleTask(id){const t=tasks.find(x=>x.id===id);if(t)t.done=!t.done;renderCalendario();renderInicio();saveData();}
-function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderCalendario();renderInicio();saveData();}
+function toggleTask(id){const t=tasks.find(x=>x.id===id);if(t)t.done=!t.done;renderCalendario();renderInicio();}
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderCalendario();renderInicio();}
 
 // ===== PAYMENTS =====
 function addPayment(){
@@ -841,10 +764,10 @@ function addPayment(){
   document.getElementById('pay-desc').value='';
   document.getElementById('pay-date').value='';
   document.getElementById('pay-val').value='';
-  renderCalendario();saveData();
+  renderCalendario();
 }
-function togglePaid(id){const p=payments.find(x=>x.id===id);if(p)p.paid=!p.paid;renderCalendario();saveData();}
-function removePayment(id){payments=payments.filter(p=>p.id!==id);renderCalendario();saveData();}
+function togglePaid(id){const p=payments.find(x=>x.id===id);if(p)p.paid=!p.paid;renderCalendario();}
+function removePayment(id){payments=payments.filter(p=>p.id!==id);renderCalendario();}
 
 // ===== INVESTMENTS =====
 function addInvestment(){
@@ -857,7 +780,7 @@ function addInvestment(){
   document.getElementById('inv-nome').value='';
   document.getElementById('inv-goal').value='';
   document.getElementById('inv-saved').value='';
-  renderInvestimentos();saveData();
+  renderInvestimentos();
 }
 function openAporte(id){
   aportingId=id;
@@ -872,9 +795,9 @@ function saveAporte(){
   if(isNaN(val)||val<=0)return;
   const inv=investments.find(x=>x.id===aportingId);
   if(inv) inv.saved=Math.min(inv.saved+val,inv.goal);
-  closeInvModal();renderInvestimentos();saveData();
+  closeInvModal();renderInvestimentos();
 }
-function removeInvestment(id){investments=investments.filter(i=>i.id!==id);renderInvestimentos();saveData();}
+function removeInvestment(id){investments=investments.filter(i=>i.id!==id);renderInvestimentos();}
 
 // ===== HISTORY =====
 function saveMonth(){
@@ -888,7 +811,6 @@ function saveMonth(){
   if(ex>=0)history[ex]=entry; else history.push(entry);
   history.sort((a,b)=>a.key.localeCompare(b.key));
   renderRelatorio();
-  saveData();
   alert(`${label} salvo!`);
 }
 
@@ -905,6 +827,7 @@ function renderInicio(){
   const todayStr=today();
   const todayExp=expenses.filter(e=>e.date===todayStr);
   document.getElementById('h-hoje').textContent=todayExp.length;
+
   const sorted=[...expenses].sort((a,b)=>b.val-a.val);
   if(sorted.length){
     document.getElementById('h-maior').textContent=fmt(sorted[0].val);
@@ -913,6 +836,7 @@ function renderInicio(){
     document.getElementById('h-maior').textContent='—';
     document.getElementById('h-maior-cat').textContent='Sem lançamentos';
   }
+
   const wk=getWeekNum(),wb=getWeekBudget(wk);
   const [s,e]=weekRange(wk);
   const wGasto=expenses.filter(x=>x.date>=s&&x.date<=e).reduce((sum,x)=>sum+x.val,0);
@@ -924,6 +848,8 @@ function renderInicio(){
     document.getElementById('h-meta-pct').textContent='—';
     document.getElementById('h-meta-sub').textContent='Configure na aba Semanal';
   }
+
+  // tarefas pendentes
   const pending=tasks.filter(t=>!t.done).slice(0,3);
   const ht=document.getElementById('home-tasks');
   if(!pending.length){ht.innerHTML=`<div class="card" style="text-align:center;color:var(--muted);padding:20px">✅ Nenhuma tarefa pendente</div>`;return;}
@@ -999,6 +925,7 @@ function renderFinancas(){
     }).join('');
   }
 
+  // budget list
   const cats=getCatTotals();
   const bl=document.getElementById('budget-list');
   if(!Object.keys(budgets).length){
@@ -1036,6 +963,7 @@ function renderSemanal(){
   const wGasto=wExp.reduce((sum,ex)=>sum+ex.val,0);
   const saldo=wb-wGasto;
   const pct=wb>0?Math.round(wGasto/wb*100):0;
+
   document.getElementById('sw-meta').textContent=fmt(wb);
   document.getElementById('sw-gasto').textContent=fmt(wGasto);
   document.getElementById('sw-saldo').textContent=fmt(saldo);
@@ -1048,6 +976,7 @@ function renderSemanal(){
     else alertEl.innerHTML=`<div class="alert alert-s">✅ Dentro da meta. Saldo disponível: <strong>${fmt(saldo)}</strong></div>`;
   } else alertEl.innerHTML='';
 
+  // visão 4 semanas
   const ov=document.getElementById('sw-weeks-overview');
   ov.innerHTML=[0,1,2,3].map(w=>{
     const bw=getWeekBudget(w);
@@ -1067,6 +996,7 @@ function renderSemanal(){
     </div>`;
   }).join('');
 
+  // gastos por categoria
   const cats={};wExp.forEach(ex=>{cats[ex.cat]=(cats[ex.cat]||0)+ex.val;});
   const cl=document.getElementById('sw-cats');
   if(!Object.keys(cats).length){
@@ -1091,6 +1021,7 @@ function renderSemanal(){
     }).join('');
   }
 
+  // tabela semanal
   const tb=document.getElementById('sw-tbody');
   if(!wExp.length){tb.innerHTML=`<tr><td colspan="4" class="empty-row">Sem lançamentos esta semana.</td></tr>`;return;}
   tb.innerHTML=[...wExp].reverse().map(e=>`<tr>
@@ -1269,28 +1200,54 @@ function init(){
   document.getElementById('renda-input').addEventListener('keydown',e=>{if(e.key==='Enter')fixarRenda();});
   document.getElementById('edit-modal').addEventListener('click',e=>{if(e.target===document.getElementById('edit-modal'))closeModal();});
   document.getElementById('inv-modal').addEventListener('click',e=>{if(e.target===document.getElementById('inv-modal'))closeInvModal();});
-  document.getElementById('reset-modal').addEventListener('click',e=>{if(e.target===document.getElementById('reset-modal'))closeResetModal();});
 
-  const loaded = loadData();
+  // dados exemplo
+  const t=today();
+  rendaMensal=14000;
+  document.getElementById('renda-input').value='14000';
+  document.getElementById('renda-input').disabled=true;
+  document.getElementById('renda-save').textContent='✎ Alterar';
+  document.getElementById('renda-save').onclick=editarRenda;
+  verbaMensal=2000;
+  document.getElementById('sw-verba-mensal').value='2000';
 
-  if (loaded) {
-    // Restore UI fields from loaded state
-    if (rendaMensal > 0) document.getElementById('renda-input').value = rendaMensal.toFixed(2);
-    if (verbaMensal > 0) document.getElementById('sw-verba-mensal').value = verbaMensal.toFixed(2);
-    if (Object.keys(semanasCustom).length) {
-      document.getElementById('sw-divisao').value = 'custom';
-      document.getElementById('sw-custom-form').style.display = 'block';
-      ['sw-s1','sw-s2','sw-s3','sw-s4'].forEach((id,i) => {
-        if (semanasCustom[i]) document.getElementById(id).value = semanasCustom[i].toFixed(2);
-      });
-    }
-  }
-
+  expenses=[
+    {id:1,desc:'Apartamento',tipo:'Fixa',cat:'Aluguel',val:2200,date:t},
+    {id:2,desc:'Carro',tipo:'Fixa',cat:'Financiamento',val:890,date:t},
+    {id:3,desc:'',tipo:'Fixa',cat:'Água',val:85,date:t},
+    {id:4,desc:'',tipo:'Fixa',cat:'Luz',val:210,date:t},
+    {id:5,desc:'',tipo:'Fixa',cat:'Internet',val:120,date:t},
+    {id:6,desc:'Tim',tipo:'Fixa',cat:'Telefone celular',val:99,date:t},
+    {id:7,desc:'Amil',tipo:'Fixa',cat:'Plano de saúde',val:650,date:t},
+    {id:8,desc:'Porto Seguro',tipo:'Fixa',cat:'Seguro veicular',val:320,date:t},
+    {id:9,desc:'Netflix+Spotify',tipo:'Fixa',cat:'Streaming e assinaturas',val:85,date:t},
+    {id:10,desc:'Smart Fit',tipo:'Fixa',cat:'Academia',val:110,date:t},
+    {id:11,desc:'IRPF',tipo:'Fixa',cat:'Impostos / IPVA / IPTU / TAXA',val:480,date:t},
+    {id:12,desc:'Igreja',tipo:'Fixa',cat:'Dízimo / doações',val:400,date:t},
+    {id:13,desc:'iFood',tipo:'Variável',cat:'Delivery',val:180,date:t},
+    {id:14,desc:'Extra',tipo:'Variável',cat:'Mercado',val:780,date:t},
+    {id:15,desc:'Shell',tipo:'Variável',cat:'Combustível',val:420,date:t},
+    {id:16,desc:'Cinema',tipo:'Variável',cat:'Lazer',val:230,date:t},
+    {id:17,desc:'Nubank',tipo:'Variável',cat:'Cartão de crédito',val:1350,date:t},
+  ];
+  budgets={Aluguel:2200,Financiamento:890,Água:85,Luz:210,Internet:120,'Telefone celular':99,'Plano de saúde':650,'Seguro veicular':320,'Streaming e assinaturas':85,Academia:110,'Impostos / IPVA / IPTU / TAXA':480,'Dízimo / doações':400,Delivery:120,Mercado:800,Combustível:380,'Cartão de crédito':1200,Lazer:200};
+  tasks=[
+    {id:1,desc:'Pagar fatura Nubank',date:t,done:false},
+    {id:2,desc:'Renovar seguro do carro',date:'',done:false},
+  ];
+  payments=[
+    {id:1,desc:'Aluguel',date:t,val:2200,paid:false},
+    {id:2,desc:'Plano de saúde',date:t,val:650,paid:true},
+  ];
+  investments=[
+    {id:1,nome:'Fundo emergência',tipo:'📦 Reserva',goal:10000,saved:3500},
+    {id:2,nome:'Viagem Europa',tipo:'✈️ Viagem',goal:15000,saved:4200},
+    {id:3,nome:'Carro novo',tipo:'🚗 Carro',goal:50000,saved:8000},
+  ];
   renderAll();
   renderCalendario();
   renderInvestimentos();
 }
 
 init();
-</script></body>
-</html>
+</script>
